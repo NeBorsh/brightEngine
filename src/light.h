@@ -2,6 +2,8 @@
 
 #include <glm/glm.hpp>
 
+static constexpr int MAX_LIGHTS = 5;
+
 enum LightType {
     DIRECTIONAL,
     POINT,

@@ -4,11 +4,18 @@
 #include <string>
 #include <vector>
 #include <glm/glm.hpp>
+#include <cstddef>
 
 struct Vertex {
     glm::vec3 Position;
     glm::vec3 Normal;
     glm::vec2 TexCoords;
+
+    bool operator==(const Vertex& other) const {
+        return Position == other.Position &&
+               Normal == other.Normal &&
+               TexCoords == other.TexCoords;
+    }
 };
 
 struct Texture {
@@ -22,6 +29,34 @@ struct Material {
     glm::vec3 diffuse;
     glm::vec3 specular;
     float shininess;
+};
+
+struct Vec3Hash {
+    std::size_t operator()(const glm::vec3& v) const {
+        std::size_t h1 = std::hash<float>()(v.x);
+        std::size_t h2 = std::hash<float>()(v.y);
+        std::size_t h3 = std::hash<float>()(v.z);
+        return h1 ^ (h2 << 1) ^ (h3 << 2);
+    }
+};
+
+struct Vec2Hash {
+    std::size_t operator()(const glm::vec2& v) const {
+        std::size_t h1 = std::hash<float>()(v.x);
+        std::size_t h2 = std::hash<float>()(v.y);
+        return h1 ^ (h2 << 1);
+    }
+};
+
+struct VertexHash {
+    std::size_t operator()(const Vertex& vertex) const {
+        Vec3Hash vec3Hash;
+        Vec2Hash vec2Hash;
+        std::size_t h1 = vec3Hash(vertex.Position);
+        std::size_t h2 = vec3Hash(vertex.Normal);
+        std::size_t h3 = vec2Hash(vertex.TexCoords);
+        return h1 ^ (h2 << 1) ^ (h3 << 2);
+    }
 };
 
 class Mesh {

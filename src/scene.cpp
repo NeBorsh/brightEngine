@@ -19,7 +19,10 @@ void Scene::renderShadowMap(int width, int height) const {
     glm::vec3 lightDir(-0.2f, -1.0f, -0.3f);
     glm::mat4 lightProjection = glm::ortho(-10.0f, 10.0f, -10.0f, 10.0f, 1.0f, 20.0f);
     glm::mat4 lightView = glm::lookAt(-2.0f * lightDir, glm::vec3(0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
-    lightSpaceMatrix = lightProjection * lightView;
+    glm::mat4 lightSpaceMatrix = lightProjection * lightView;
+
+    int viewport[4];
+    glGetIntegerv(GL_VIEWPORT, viewport);
 
     glViewport(0, 0, SHADOW_WIDTH, SHADOW_HEIGHT);
     glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBO);
@@ -37,7 +40,7 @@ void Scene::renderShadowMap(int width, int height) const {
 
     glCullFace(GL_BACK);
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
-    glViewport(0, 0, width, height);
+    glViewport(viewport[0], viewport[1], viewport[2], viewport[3]);
 }
 
 void Scene::render(int width, int height) const {
@@ -59,7 +62,7 @@ void Scene::render(int width, int height) const {
     glBindTexture(GL_TEXTURE_2D, depthMap);
     glUniform1i(glGetUniformLocation(shader->getID(), "shadowMap"), 1);
 
-    for (size_t i = 0; i < lights.size() && i < 5; ++i) {
+    for (size_t i = 0; i < lights.size() && i < MAX_LIGHTS; ++i) {
         const Light& light = lights[i];
         std::string base = "lights[" + std::to_string(i) + "]";
         glUniform1i(glGetUniformLocation(shader->getID(), (base + ".type").c_str()), static_cast<int>(light.type));

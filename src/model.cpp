@@ -1,5 +1,6 @@
 #include "model.h"
 #include "texture.h"
+#include <unordered_map>
 
 Model::Model(const std::string& path) {
     loadModel(path);
@@ -39,6 +40,7 @@ Mesh Model::processMesh(
 {
     std::vector<Vertex> vertices;
     std::vector<unsigned int> indices;
+    std::unordered_map<Vertex, unsigned int, VertexHash> uniqueVertices;
 
     for (size_t i = 0; i < mesh.indices.size(); ++i) {
         tinyobj::index_t idx = mesh.indices[i];
@@ -50,23 +52,30 @@ Mesh Model::processMesh(
             attrib.vertices[3 * idx.vertex_index + 2]
         };
 
-        if (idx.normal_index >= 0) {
+        if (idx.normal_index >= 0 && static_cast<size_t>(idx.normal_index) * 3 + 2 < attrib.normals.size()) {
             vertex.Normal = {
                 attrib.normals[3 * idx.normal_index + 0],
                 attrib.normals[3 * idx.normal_index + 1],
                 attrib.normals[3 * idx.normal_index + 2]
             };
+        } else {
+            vertex.Normal = glm::vec3(0.0f);
         }
 
-        if (idx.texcoord_index >= 0) {
+        if (idx.texcoord_index >= 0 && static_cast<size_t>(idx.texcoord_index) * 2 + 1 < attrib.texcoords.size()) {
             vertex.TexCoords = {
                 attrib.texcoords[2 * idx.texcoord_index + 0],
                 1.0f - attrib.texcoords[2 * idx.texcoord_index + 1]
             };
+        } else {
+            vertex.TexCoords = glm::vec2(0.0f);
         }
 
-        vertices.push_back(vertex);
-        indices.push_back(static_cast<unsigned int>(i));
+        if (uniqueVertices.find(vertex) == uniqueVertices.end()) {
+            uniqueVertices[vertex] = static_cast<unsigned int>(vertices.size());
+            vertices.push_back(vertex);
+        }
+        indices.push_back(uniqueVertices[vertex]);
     }
 
     Material material;
@@ -129,7 +138,7 @@ void Model::Draw(const Shader& shader, const std::vector<Light>& lights, const g
     glUniform3f(glGetUniformLocation(shader.getID(), "viewPos"), viewPos.x, viewPos.y, viewPos.z);
     glUniform1i(glGetUniformLocation(shader.getID(), "numLights"), static_cast<int>(lights.size()));
 
-    for (size_t i = 0; i < lights.size() && i < 5; ++i) {
+    for (size_t i = 0; i < lights.size() && i < MAX_LIGHTS; ++i) {
         const Light& light = lights[i];
         std::string base = "lights[" + std::to_string(i) + "]";
         glUniform1i(glGetUniformLocation(shader.getID(), (base + ".type").c_str()), static_cast<int>(light.type));
@@ -153,7 +162,7 @@ void Model::Draw(const Shader& shader, const std::vector<Light>& lights, const g
         glUniform3f(glGetUniformLocation(shader.getID(), "material.specular"), mat.specular.x, mat.specular.y, mat.specular.z);
         glUniform1f(glGetUniformLocation(shader.getID(), "material.shininess"), mat.shininess);
 
-        for (size_t i = 0; i < mesh.textures.size(); i++) {
+        for (size_t i = 0; i < mesh.textures.size(); ++i) {
             glActiveTexture(GL_TEXTURE0 + i);
             glBindTexture(GL_TEXTURE_2D, mesh.textures[i].id);
             glUniform1i(glGetUniformLocation(shader.getID(), mesh.textures[i].type.c_str()), static_cast<int>(i));

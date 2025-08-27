@@ -7,6 +7,7 @@
 #include "light.h"
 #include "gameobject.h"
 #include "camera.h"
+#include <memory>
 
 int main() {
     Engine engine;
@@ -21,16 +22,16 @@ int main() {
         return -1;
     }
 
-    Model* model = new Model("models/model.obj");
-    if (!model) {
+    auto model = std::make_shared<Model>("models/model.obj");
+    if (!model || model->getMeshes().empty()) {
         std::cerr << "Failed to load model!" << std::endl;
         return -1;
     }
 
     Transform transform(glm::vec3(0.0f, 0.0f, -5.0f),
-                        glm::vec3(-90.0f, 0.0f, 0.0f),
+                        glm::vec3(0.0f, 180.0f, 0.0f),
                         glm::vec3(0.5f));
-    GameObject go(model, transform);
+    GameObject go(model.get(), transform);
     scene->gameObjects.push_back(go);
 
     Light pointLight = Light::PointLight(glm::vec3(2.0f, 4.0f, 2.0f));
