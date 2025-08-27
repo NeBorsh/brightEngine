@@ -132,7 +132,6 @@ void Model::Draw(const Shader& shader, const std::vector<Light>& lights, const g
     for (size_t i = 0; i < lights.size() && i < 5; ++i) {
         const Light& light = lights[i];
         std::string base = "lights[" + std::to_string(i) + "]";
-
         glUniform1i(glGetUniformLocation(shader.getID(), (base + ".type").c_str()), static_cast<int>(light.type));
         glUniform3f(glGetUniformLocation(shader.getID(), (base + ".position").c_str()), light.position.x, light.position.y, light.position.z);
         glUniform3f(glGetUniformLocation(shader.getID(), (base + ".direction").c_str()), light.direction.x, light.direction.y, light.direction.z);

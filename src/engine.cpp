@@ -88,7 +88,11 @@ void Engine::run() {
         glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        if (scene) scene->render();
+        if (scene) {
+            int width, height;
+            glfwGetFramebufferSize(window, &width, &height);
+            scene->render(width, height);
+        }
 
         glfwSwapBuffers(window);
         glfwPollEvents();

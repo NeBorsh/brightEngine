@@ -1,16 +1,24 @@
 #include "scene.h"
+#include <iostream>
 #include <glad/glad.h>
 #include "shader.h"
 #include "glm/gtc/type_ptr.hpp"
 
+Scene::Scene() {
+    shadowShader = std::make_unique<Shader>("shaders/shadow.vert", "shaders/shadow.frag");
+    if (!shadowShader->isCompiled()) {
+        std::cerr << "Failed to compile shadow shader!" << std::endl;
+    }
+}
+
 void Scene::update(float deltaTime) {}
 
-void Scene::renderShadowMap() {
-    if (!shader) return;
+void Scene::renderShadowMap(int width, int height) const {
+    if (!shader || !shadowShader->isCompiled()) return;
 
     glm::vec3 lightDir(-0.2f, -1.0f, -0.3f);
     glm::mat4 lightProjection = glm::ortho(-10.0f, 10.0f, -10.0f, 10.0f, 1.0f, 20.0f);
-    glm::mat4 lightView = glm::lookAt(-2.0f * lightDir, glm::vec3(0), glm::vec3(0, 1, 0));
+    glm::mat4 lightView = glm::lookAt(-2.0f * lightDir, glm::vec3(0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
     lightSpaceMatrix = lightProjection * lightView;
 
     glViewport(0, 0, SHADOW_WIDTH, SHADOW_HEIGHT);
@@ -18,29 +26,27 @@ void Scene::renderShadowMap() {
     glClear(GL_DEPTH_BUFFER_BIT);
     glCullFace(GL_FRONT);
 
-    Shader shadowShader("shaders/shadow.vert", "shaders/shadow.frag");
-    if (!shadowShader.isCompiled()) return;
-
-    shadowShader.use();
-    glUniformMatrix4fv(glGetUniformLocation(shadowShader.getID(), "lightSpaceMatrix"), 1, GL_FALSE, glm::value_ptr(lightSpaceMatrix));
+    shadowShader->use();
+    glUniformMatrix4fv(glGetUniformLocation(shadowShader->getID(), "lightSpaceMatrix"), 1, GL_FALSE, glm::value_ptr(lightSpaceMatrix));
 
     for (const auto& obj : gameObjects) {
         glm::mat4 model = obj.transform.getModelMatrix();
-        glUniformMatrix4fv(glGetUniformLocation(shadowShader.getID(), "model"), 1, GL_FALSE, glm::value_ptr(model));
-        obj.model->Draw(shadowShader, {}, glm::vec3(0), nullptr);
+        glUniformMatrix4fv(glGetUniformLocation(shadowShader->getID(), "model"), 1, GL_FALSE, glm::value_ptr(model));
+        obj.model->Draw(*shadowShader, {}, glm::vec3(0.0f), nullptr);
     }
 
     glCullFace(GL_BACK);
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
-    glViewport(0, 0, 800, 600);
+    glViewport(0, 0, width, height);
 }
 
-void Scene::render() const {
+void Scene::render(int width, int height) const {
     if (!shader || gameObjects.empty()) return;
 
-    const_cast<Scene*>(this)->renderShadowMap();
+    renderShadowMap(width, height);
 
-    glm::mat4 projection = glm::perspective(glm::radians(camera.getZoom()), 800.0f / 600.0f, 0.1f, 100.0f);
+    float aspect = static_cast<float>(width) / static_cast<float>(height);
+    glm::mat4 projection = glm::perspective(glm::radians(camera.getZoom()), aspect, 0.1f, 100.0f);
     glm::mat4 view = camera.getViewMatrix();
 
     shader->use();

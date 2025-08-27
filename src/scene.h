@@ -19,10 +19,13 @@ public:
     static const int SHADOW_WIDTH = 2048;
     static const int SHADOW_HEIGHT = 2048;
 
-    glm::mat4 lightSpaceMatrix;
+    mutable glm::mat4 lightSpaceMatrix;
 
-    Scene() = default;
+    Scene();
     void update(float deltaTime);
-    void render() const;
-    void renderShadowMap();
+    void render(int width, int height) const;
+    void renderShadowMap(int width, int height) const;
+
+private:
+    std::unique_ptr<Shader> shadowShader;
 };

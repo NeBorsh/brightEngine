@@ -26,8 +26,8 @@ private:
     bool firstMouse;
     float lastFrame;
 
-    static constexpr int WINDOW_WIDTH = 800;
-    static constexpr int WINDOW_HEIGHT = 600;
+    static constexpr int WINDOW_WIDTH = 1280;
+    static constexpr int WINDOW_HEIGHT = 720;
     static constexpr const char* WINDOW_TITLE = "OpenGL Engine";
 
     void framebufferResizeCallback(int width, int height);
