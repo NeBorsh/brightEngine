@@ -13,7 +13,7 @@ public:
     std::vector<GameObject> gameObjects;
     Camera camera;
     std::vector<Light> lights;
-    std::unique_ptr<Shader> shader;
+    std::shared_ptr<Shader> shader;
     unsigned int depthMapFBO = 0;
     unsigned int depthMap = 0;
     static const int SHADOW_WIDTH = 2048;
