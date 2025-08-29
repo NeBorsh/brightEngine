@@ -14,13 +14,17 @@ public:
     Camera camera;
     std::vector<Light> lights;
     std::shared_ptr<Shader> shader;
+
     unsigned int depthMapFBO = 0;
     unsigned int depthMap = 0;
+
     static const int SHADOW_WIDTH = 2048;
     static const int SHADOW_HEIGHT = 2048;
+
     mutable glm::mat4 lightSpaceMatrix;
 
     Scene();
+
     virtual void update(float deltaTime);
     virtual void render(int width, int height) const;
     virtual void processInput(Engine& engine, float deltaTime);
