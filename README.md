@@ -6,10 +6,10 @@
 > I compiled the engine unfortunately using msvc, but I think it can be compiled using other compilers
 
 To compile this miracle, you will need [xmake](https://xmake.io/), then clone the repository, and follow these steps:
-- `1:` Temporarily move the **models** and **shaders** folders somewhere
+- `1:` Temporarily move the **models,** **sounds** and **shaders** folders somewhere
 - `2:` Leave in the folder for now only the xmake config and the src folder, then write `xmake build`
 - `3:` Agree to install libraries via the package manager xmake and wait for the download, after which the project will build itself
-- `4:` If the project was successfully built, move the folders with **shaders** and **models** to the folder with the executable file
+- `4:` If the project was successfully built, move the folders with **shaders,** **sounds** and **models** to the folder with the executable file
 - `5:` Run the executable file, or in the project console, enter the `xmake run`
 ------------------
 # Roadmap
@@ -21,3 +21,4 @@ To compile this miracle, you will need [xmake](https://xmake.io/), then clone th
 # Screenshots
 
 ![pikcha](https://i.ibb.co/wrNQ3dsd/2025-08-27-055735.png)
+![pikcha2](https://i.ibb.co/ZpXxHhBc/image.png)
