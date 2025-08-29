@@ -1,5 +1,4 @@
-#include "gameobject.h"
-
+#include "gameObject.h"
 #include "glm/gtc/type_ptr.hpp"
 
 GameObject::GameObject(Model* model, const Transform& transform)

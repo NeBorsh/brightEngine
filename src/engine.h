@@ -1,5 +1,4 @@
 #pragma once
-
 #include <memory>
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
@@ -9,19 +8,17 @@ class Engine {
 public:
     Engine();
     ~Engine();
-
     bool init();
     void setScene(std::unique_ptr<Scene> scene);
     void run();
-
     void processInput(float deltaTime);
     void handleMouseMovement(double xpos, double ypos);
     void handleMouseScroll(double xoffset, double yoffset);
 
-private:
     GLFWwindow* window;
-    std::unique_ptr<Scene> scene;
 
+private:
+    std::unique_ptr<Scene> scene;
     float lastX, lastY;
     bool firstMouse;
     float lastFrame;

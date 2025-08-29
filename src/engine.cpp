@@ -1,5 +1,6 @@
 #include "engine.h"
 #include "audio.h"
+
 #include <iostream>
 
 Engine::Engine()
@@ -23,7 +24,6 @@ bool Engine::init() {
         std::cerr << "Failed to initialize GLFW" << std::endl;
         return false;
     }
-
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
@@ -38,7 +38,6 @@ bool Engine::init() {
         return false;
     }
     glfwMakeContextCurrent(window);
-
     if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
         std::cerr << "Failed to initialize GLAD" << std::endl;
         return false;
@@ -49,22 +48,18 @@ bool Engine::init() {
     glViewport(0, 0, width, height);
 
     glfwSetWindowUserPointer(window, this);
-
     glfwSetFramebufferSizeCallback(window, [](GLFWwindow* w, int width, int height) {
         auto* engine = static_cast<Engine*>(glfwGetWindowUserPointer(w));
         engine->framebufferResizeCallback(width, height);
     });
-
     glfwSetCursorPosCallback(window, [](GLFWwindow* w, double x, double y) {
         auto* engine = static_cast<Engine*>(glfwGetWindowUserPointer(w));
         engine->handleMouseMovement(x, y);
     });
-
     glfwSetScrollCallback(window, [](GLFWwindow* w, double x, double y) {
         auto* engine = static_cast<Engine*>(glfwGetWindowUserPointer(w));
         engine->handleMouseScroll(x, y);
     });
-
     glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
     glEnable(GL_DEPTH_TEST);
@@ -111,27 +106,9 @@ void Engine::processInput(float deltaTime) {
         glfwSetWindowShouldClose(window, true);
     }
 
-    if (!scene) return;
-
-    float velocity = 2.5f * deltaTime;
-
-    if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
-        scene->camera.processKeyboard(FORWARD, velocity);
-    if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
-        scene->camera.processKeyboard(BACKWARD, velocity);
-    if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
-        scene->camera.processKeyboard(LEFT, velocity);
-    if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
-        scene->camera.processKeyboard(RIGHT, velocity);
-
-    static bool spacePressedLastFrame = false;
-    bool spacePressedNow = (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS);
-
-    if (spacePressedNow && !spacePressedLastFrame) {
-        Audio::playSound3D("sounds/pop.wav", 100.0f, 1.0f, 100.0f, false);
+    if (scene) {
+        scene->processInput(*this, deltaTime);
     }
-
-    spacePressedLastFrame = spacePressedNow;
 }
 
 void Engine::handleMouseMovement(double xpos, double ypos) {
@@ -148,13 +125,13 @@ void Engine::handleMouseMovement(double xpos, double ypos) {
     lastY = static_cast<float>(ypos);
 
     if (scene) {
-        scene->camera.processMouseMovement(xoffset, yoffset);
+        scene->processMouseMovement(xoffset, yoffset);
     }
 }
 
 void Engine::handleMouseScroll(double xoffset, double yoffset) {
     if (scene) {
-        scene->camera.processMouseScroll(static_cast<float>(yoffset));
+        scene->processMouseScroll(static_cast<float>(yoffset));
     }
 }
 

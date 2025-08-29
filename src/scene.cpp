@@ -13,39 +13,8 @@ Scene::Scene() {
 
 void Scene::update(float deltaTime) {}
 
-void Scene::renderShadowMap(int width, int height) const {
-    if (!shader || !shadowShader->isCompiled()) return;
-
-    glm::vec3 lightDir(-0.2f, -1.0f, -0.3f);
-    glm::mat4 lightProjection = glm::ortho(-10.0f, 10.0f, -10.0f, 10.0f, 1.0f, 20.0f);
-    glm::mat4 lightView = glm::lookAt(-2.0f * lightDir, glm::vec3(0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
-    glm::mat4 lightSpaceMatrix = lightProjection * lightView;
-
-    int viewport[4];
-    glGetIntegerv(GL_VIEWPORT, viewport);
-
-    glViewport(0, 0, SHADOW_WIDTH, SHADOW_HEIGHT);
-    glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBO);
-    glClear(GL_DEPTH_BUFFER_BIT);
-    glCullFace(GL_FRONT);
-
-    shadowShader->use();
-    glUniformMatrix4fv(glGetUniformLocation(shadowShader->getID(), "lightSpaceMatrix"), 1, GL_FALSE, glm::value_ptr(lightSpaceMatrix));
-
-    for (const auto& obj : gameObjects) {
-        glm::mat4 model = obj.transform.getModelMatrix();
-        glUniformMatrix4fv(glGetUniformLocation(shadowShader->getID(), "model"), 1, GL_FALSE, glm::value_ptr(model));
-        obj.model->Draw(*shadowShader, {}, glm::vec3(0.0f), nullptr);
-    }
-
-    glCullFace(GL_BACK);
-    glBindFramebuffer(GL_FRAMEBUFFER, 0);
-    glViewport(viewport[0], viewport[1], viewport[2], viewport[3]);
-}
-
 void Scene::render(int width, int height) const {
     if (!shader || gameObjects.empty()) return;
-
     renderShadowMap(width, height);
 
     float aspect = static_cast<float>(width) / static_cast<float>(height);
@@ -56,8 +25,8 @@ void Scene::render(int width, int height) const {
     glUniformMatrix4fv(glGetUniformLocation(shader->getID(), "projection"), 1, GL_FALSE, glm::value_ptr(projection));
     glUniformMatrix4fv(glGetUniformLocation(shader->getID(), "view"), 1, GL_FALSE, glm::value_ptr(view));
     glUniform3f(glGetUniformLocation(shader->getID(), "viewPos"), camera.getPosition().x, camera.getPosition().y, camera.getPosition().z);
-    glUniform1i(glGetUniformLocation(shader->getID(), "numLights"), static_cast<int>(lights.size()));
     glUniformMatrix4fv(glGetUniformLocation(shader->getID(), "lightSpaceMatrix"), 1, GL_FALSE, glm::value_ptr(lightSpaceMatrix));
+
     glActiveTexture(GL_TEXTURE1);
     glBindTexture(GL_TEXTURE_2D, depthMap);
     glUniform1i(glGetUniformLocation(shader->getID(), "shadowMap"), 1);
@@ -81,4 +50,57 @@ void Scene::render(int width, int height) const {
     for (const auto& obj : gameObjects) {
         obj.Draw(*shader, lights, camera.getPosition());
     }
+}
+
+void Scene::renderShadowMap(int width, int height) const {
+    if (!shader || !shadowShader->isCompiled() || gameObjects.empty()) return;
+
+    const Light* light = nullptr;
+    for (const auto& l : lights) {
+        if (l.type == DIRECTIONAL) {
+            light = &l;
+            break;
+        }
+    }
+    if (!light) return;
+
+    glm::vec3 lightDir = -glm::normalize(light->direction);
+    glm::vec3 lightPos = lightDir * 10.0f;
+    glm::vec3 up = (std::abs(lightDir.y) > 0.99f) ? glm::vec3(1.0f, 0.0f, 0.0f) : glm::vec3(0.0f, 1.0f, 0.0f);
+
+    glm::mat4 lightProjection = glm::ortho(-10.0f, 10.0f, -10.0f, 10.0f, 1.0f, 20.0f);
+    glm::mat4 lightView = glm::lookAt(lightPos, glm::vec3(0.0f), up);
+    glm::mat4 lightSpaceMatrix = lightProjection * lightView;
+
+    int viewport[4];
+    glGetIntegerv(GL_VIEWPORT, viewport);
+    glViewport(0, 0, SHADOW_WIDTH, SHADOW_HEIGHT);
+    glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBO);
+    glClear(GL_DEPTH_BUFFER_BIT);
+
+    glCullFace(GL_FRONT);
+    shadowShader->use();
+    glUniformMatrix4fv(glGetUniformLocation(shadowShader->getID(), "lightSpaceMatrix"), 1, GL_FALSE, glm::value_ptr(lightSpaceMatrix));
+
+    for (const auto& obj : gameObjects) {
+        glm::mat4 model = obj.transform.getModelMatrix();
+        glUniformMatrix4fv(glGetUniformLocation(shadowShader->getID(), "model"), 1, GL_FALSE, glm::value_ptr(model));
+        obj.model->Draw(*shadowShader, {}, glm::vec3(0.0f), nullptr);
+    }
+
+    glCullFace(GL_BACK);
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    glViewport(viewport[0], viewport[1], viewport[2], viewport[3]);
+
+    this->lightSpaceMatrix = lightSpaceMatrix;
+}
+
+void Scene::processInput(Engine& engine, float deltaTime) {}
+
+void Scene::processMouseMovement(float xoffset, float yoffset) {
+    camera.processMouseMovement(xoffset, yoffset);
+}
+
+void Scene::processMouseScroll(float yoffset) {
+    camera.processMouseScroll(yoffset);
 }

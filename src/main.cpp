@@ -1,5 +1,4 @@
 #include <iostream>
-
 #include "engine.h"
 #include "model.h"
 #include "shader.h"
@@ -7,13 +6,40 @@
 #include "light.h"
 #include "gameobject.h"
 #include "camera.h"
+#include "audio.h"
 #include <memory>
+
+class TestScene : public Scene {
+public:
+    void processInput(Engine& engine, float deltaTime) override {
+        float speed = 2.5f;
+        if (glfwGetKey(engine.window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS) {
+            speed *= 3.0f;
+        }
+
+        if (glfwGetKey(engine.window, GLFW_KEY_W) == GLFW_PRESS)
+            camera.processKeyboard(FORWARD, deltaTime * speed);
+        if (glfwGetKey(engine.window, GLFW_KEY_S) == GLFW_PRESS)
+            camera.processKeyboard(BACKWARD, deltaTime * speed);
+        if (glfwGetKey(engine.window, GLFW_KEY_A) == GLFW_PRESS)
+            camera.processKeyboard(LEFT, deltaTime * speed);
+        if (glfwGetKey(engine.window, GLFW_KEY_D) == GLFW_PRESS)
+            camera.processKeyboard(RIGHT, deltaTime * speed);
+
+        static bool spacePressedLastFrame = false;
+        bool spacePressedNow = (glfwGetKey(engine.window, GLFW_KEY_SPACE) == GLFW_PRESS);
+        if (spacePressedNow && !spacePressedLastFrame) {
+            Audio::playSound3D("sounds/pop.wav", 100.0f, 1.0f, 100.0f, false);
+        }
+        spacePressedLastFrame = spacePressedNow;
+    }
+};
 
 int main() {
     Engine engine;
     if (!engine.init()) return -1;
 
-    auto scene = std::make_unique<Scene>();
+    auto scene = std::make_unique<TestScene>();
     scene->camera = Camera(glm::vec3(0.0f, 0.0f, 3.0f));
 
     auto shader = std::make_unique<Shader>("shaders/model.vert", "shaders/model.frag");
@@ -31,6 +57,7 @@ int main() {
     Transform transform(glm::vec3(0.0f, 0.0f, -5.0f),
                         glm::vec3(0.0f, 180.0f, 0.0f),
                         glm::vec3(0.5f));
+
     GameObject go(model.get(), transform);
     scene->gameObjects.push_back(go);
 
