@@ -5,7 +5,8 @@ add_requires(
     "glad",
     "glm",
     "tinyobjloader",
-    "stb")
+    "stb",
+    "miniaudio")
 
 target("brightengine")
     set_kind("binary")
@@ -17,4 +18,5 @@ target("brightengine")
         "glad",
         "glm",
         "tinyobjloader",
-        "stb")
+        "stb",
+        "miniaudio")

@@ -1,4 +1,5 @@
 #include "engine.h"
+#include "audio.h"
 #include <iostream>
 
 Engine::Engine()
@@ -69,6 +70,11 @@ bool Engine::init() {
     glEnable(GL_DEPTH_TEST);
     glDepthFunc(GL_LESS);
 
+    if (!Audio::init()) {
+        std::cerr << "Failed to initialize audio system!" << std::endl;
+        return false;
+    }
+
     return true;
 }
 
@@ -84,6 +90,7 @@ void Engine::run() {
 
         processInput(deltaTime);
         if (scene) scene->update(deltaTime);
+        Audio::update();
 
         glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -116,6 +123,15 @@ void Engine::processInput(float deltaTime) {
         scene->camera.processKeyboard(LEFT, velocity);
     if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
         scene->camera.processKeyboard(RIGHT, velocity);
+
+    static bool spacePressedLastFrame = false;
+    bool spacePressedNow = (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS);
+
+    if (spacePressedNow && !spacePressedLastFrame) {
+        Audio::playSound3D("sounds/pop.wav", 100.0f, 1.0f, 100.0f, false);
+    }
+
+    spacePressedLastFrame = spacePressedNow;
 }
 
 void Engine::handleMouseMovement(double xpos, double ypos) {
